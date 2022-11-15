@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rekap VK BPS Provinsi Lampung</title>
+    <link rel="shortcut icon" href="https://bpslampung.id/landing/img/logo.png" type="image/png">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" /> -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <div class="container">
+        <h1 class="text-center">Download Rekap Per Kabupaten/Kota</h1>
+        <div class="mt-5">
+          <form id="formSearch">
+            <div class="mb-3">
+              <label for="accessToken" class="form-label text-uppercase"
+                >Masukan Token Akses</label
+              >
+              <input
+                type="text"
+                name="accessToken"
+                id="accessToken"
+                class="form-control"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="idKabkota" class="form-label text-uppercase"
+                >Pilih Kabupaten/Kota</label
+              >
+              <select name="idKabkota" id="idKabkota" class="form-control">
+                <option value="0000">- Pilih Kabupaten/Kota</option>
+                <option value="1801">Lampung Barat</option>
+                <option value="1802">Tanggamus</option>
+                <option value="1803">Lampung Selatan</option>
+                <option value="1804">Lampung Timur</option>
+                <option value="1805">Lampung Tengah</option>
+                <option value="1806">Lampung Utara</option>
+                <option value="1807">Way Kanan</option>
+                <option value="1808">Tulang Bawang</option>
+                <option value="1809">Pesawaran</option>
+                <option value="1810">Pringsewu</option>
+                <option value="1811">Mesuji</option>
+                <option value="1812">Tulang Bawang Barat</option>
+                <option value="1813">Pesisir Barat</option>
+                <option value="1871">Bandar Lampung</option>
+                <option value="1872">Metro</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div id="showTable"></div>
+      </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script> -->
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="common.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
