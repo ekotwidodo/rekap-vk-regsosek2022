@@ -7,8 +7,7 @@ async function fetchApi(url, token) {
     },
   });
 
-  const resData = await response.json();
-  return resData;
+  return response;
 }
 
 function showTable(data, title) {
@@ -50,13 +49,13 @@ function showTable(data, title) {
     totalRecord += 1;
   }
   // Finally add the newlu created table
-  let divContainer = document.getElementById("showTable");
+  let divContainer = document.getElementById("showDashboard");
   divContainer.innerHTML = "";
   // add download excel button before title
   let button = document.createElement("button");
-  button.className = "btn btn-primary btn-sm";
+  button.className = "btn btn-success";
   button.setAttribute("id", "downloadExcel");
-  button.innerHTML = "Download Excel";
+  button.innerHTML = "<span>Download Excel</span>";
   button.addEventListener("click", function () {
     downloadExcel(title);
   });
@@ -87,4 +86,84 @@ function sortingData(data) {
   return data.sort((a, b) => {
     return a.idsubsls - b.idsubsls;
   });
+}
+
+function familyCategory(data) {
+  // Jumlah keluraga sangat miskin, miskin, dan tidak miskin
+  data.reduce((prev, curr) => {
+    return {
+      sangat_miskin: prev.sangat_miskin + curr.sangat_miskin,
+      miskin: prev.miskin + curr.miskin,
+      tidak_miskin: prev.tidak_miskin + curr.tidak_miskin,
+    }
+  })
+}
+
+function slsRecap(data) {
+  // Sls Total, Sls berubah
+  const idsubsls_baru = data.filter((d) => d.idsubsls_baru !== null);
+  const idsubsls_lama = data.filter((d) => d.idsubsls_baru === null);
+  return {
+    idsubsls_baru: idsubsls_baru.length,
+    idsubsls_lama: idsubsls_lama.length,
+  }
+}
+
+function showDashboardDiv(dashboardDiv, data, nmKabkota) {
+  let summaryDiv = document.createElement("div");
+  summaryDiv.id = "summaryDiv";
+  summaryDiv.className = "row gx-4";
+
+  let hTitle = document.createElement("h3");
+  hTitle.textContent = `Ringkasan Rekap VK ${nmKabkota}`;
+  hTitle.className = "text-center text-uppercase font-weight-bold mb-3";
+  summaryDiv.appendChild(hTitle);
+
+  let childLeftSummaryDiv = document.createElement("div");
+  childLeftSummaryDiv.id = "childLeftSummaryDiv";
+  childLeftSummaryDiv.className = "col p-2 rounded-3";
+  const getSlsRecap = slsRecap(data);
+  childLeftSummaryDiv.innerHTML = `<p>Total SLS: ${getSlsRecap.idsubsls_baru + getSlsRecap.idsubsls_lama}</p><p>Total SLS Baru: ${getSlsRecap.idsubsls_baru}</p>`;
+
+  let childRightSummaryDiv = document.createElement("div");
+  childRightSummaryDiv.id = "childRightSummaryDiv";
+  childRightSummaryDiv.className = "col p-2 bg-warning rounded-3";
+
+  let chartRightSummary = echarts.init(childRightSummaryDiv);
+
+  let childRightOption = {
+    title: {
+      text: "Jumlah Keluarga Berdasarkan Status Kesejahteraan",
+    },
+    tooltip: {
+      trigger: "item",
+    },
+    emphasis: {
+      itemStyle: {
+        shadowBlur: 10,
+        shadowOffsetX: 0,
+        shadowColor: "rgba(0, 0, 0, 0.5)",
+      },
+    },
+    series: [
+      {
+        name: "Status Kesejahteraan",
+        type: "pie",
+        radius: "50%",
+        data: [
+          { value: 1048, name: "Search Engine" },
+          { value: 735, name: "Direct" },
+          { value: 580, name: "Email" },
+        ],
+      },
+    ],
+  };
+
+  if (childRightOption && typeof childRightOption === "object") {
+    chartRightSummary.setOption(childRightOption);
+  }
+
+  summaryDiv.appendChild(childLeftSummaryDiv);
+  summaryDiv.appendChild(childRightSummaryDiv);
+  dashboardDiv.appendChild(summaryDiv);
 }
