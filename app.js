@@ -1,11 +1,76 @@
 document.onreadystatechange = function () {
   // Define Base API
-  const BASE_API = "https://regsosek-repo.cloud.bps.go.id/api/rekap-vk/";
+  const BASE_API = "<your-api-url>";
+  const regencies = [
+    {
+      id: "1801",
+      name: "KABUPATEN LAMPUNG BARAT",
+    },
+    {
+      id: "1802",
+      name: "KABUPATEN TANGGAMUS",
+    },
+    {
+      id: "1803",
+      name: "KABUPATEN LAMPUNG SELATAN",
+    },
+    {
+      id: "1804",
+      name: "KABUPATEN LAMPUNG TIMUR",
+    },
+    {
+      id: "1805",
+      name: "KABUPATEN LAMPUNG TENGAH",
+    },
+    {
+      id: "1806",
+      name: "KABUPATEN LAMPUNG UTARA",
+    },
+    {
+      id: "1807",
+      name: "KABUPATEN WAY KANAN",
+    },
+    {
+      id: "1808",
+      name: "KABUPATEN TULANG BAWANG",
+    },
+    {
+      id: "1809",
+      name: "KABUPATEN PESAWARAN",
+    },
+    {
+      id: "1810",
+      name: "KABUPATEN PRINGSEWU",
+    },
+    {
+      id: "1811",
+      name: "KABUPATEN MESUJI",
+    },
+    {
+      id: "1812",
+      name: "KABUPATEN TULANG BAWANG BARAT",
+    },
+    {
+      id: "1813",
+      name: "KABUPATEN PESISIR BARAT",
+    },
+    {
+      id: "1871",
+      name: "KOTA BANDAR LAMPUNG",
+    },
+    {
+      id: "1872",
+      name: "KOTA METRO",
+    },
+  ];
 
   // Define Variables
   let btnSearch = document.getElementById("btnSearch");
   let resultContainer = document.getElementById("resultContainer");
   let progressBar = document.getElementsByClassName("progress-bar")[0];
+
+  // Load Kabupaten/Kota
+  loadKabkota(regencies);
 
   // Action when button View Rekap VK is clicked
   btnSearch.addEventListener("click", function (e) {
@@ -14,7 +79,8 @@ document.onreadystatechange = function () {
     resultContainer.innerHTML = "";
     let dashboardDiv = document.createElement("div");
     dashboardDiv.id = "showDashboard";
-    dashboardDiv.className = "container bg-white p-5 rounded-3 mb-3";
+    dashboardDiv.className =
+      "container border border-black bg-white p-5 rounded-3 mb-3";
     resultContainer.appendChild(dashboardDiv);
 
     progressBar.setAttribute("style", `width: 0}%`);
@@ -42,15 +108,28 @@ document.onreadystatechange = function () {
         confirmButtonText: "Tutup",
       });
     } else {
-      // If there is no childs inside showTable div
-      showDashboard.innerHTML = "";
+      // If there is no childs inside dashboardDiv
+      let showDashboard = document.getElementById("showDashboard");
       let width = 0;
       let identity = setInterval(scene, 30);
       function scene() {
         if (width >= 100) {
           clearInterval(identity);
           width = 0;
-          showRecap(idKabkota.value, idKabkota.options[idKabkota.selectedIndex].text, accessToken.value, dashboardDiv);
+          showDashboard.innerHTML = "";
+          
+          Swal.fire({
+            icon: "success",
+            title: "Data berhasil dimuat!",
+            showConfirmButton: false,
+          });
+
+          showRecap(
+            idKabkota.value,
+            idKabkota.options[idKabkota.selectedIndex].text,
+            accessToken.value,
+            showDashboard
+          );
         } else {
           width++;
           progressBar.setAttribute("style", `width: ${width}%`);
@@ -60,7 +139,7 @@ document.onreadystatechange = function () {
     }
   });
 
-  function showRecap(idKabkota, nmKabkota, accessToken, dashboardDiv) {
+  function showRecap(idKabkota, nmKabkota, accessToken, showDashboard) {
     // Fetch API
     fetchApi(`${BASE_API}${idKabkota}`, accessToken).then(function (resp) {
       // If data doesn't exist
@@ -78,25 +157,27 @@ document.onreadystatechange = function () {
       resp
         .json()
         .then(({ data }) => {
-          let today = new Date().toLocaleDateString("id-ID", {
-            weekday: "long",
-            month: "long",
-            year: "numeric",
-            day: "numeric",
-          });
+          showDashboardDiv(showDashboard, nmKabkota);
 
-          showDashboardDiv(dashboardDiv, data, nmKabkota);
+          setTimeout(() => {
+            // Show the data
+            let familyCategoryRecaps = familyCategoryRecap(data);
+            let familiesRecaps = familyRecap(data);
+            let slsRecaps = slsRecap(data);
+            let slsTableRecaps = slsTable(data);
 
-          // showTable(
-          //   sortingData(data),
-          //   `Rekapitulasi VK-${idKabkota} Kondisi ${today}`
-          // );
+            showLeftSummaryDiv(familiesRecaps);
+            showCenterSummaryDiv(slsRecaps);
+            showRightSummaryDiv(familyCategoryRecaps);
+            showTableDiv(slsTableRecaps, data);
+          }, 3000);
         })
         .catch((error) => {
+          console.log(error);
           Swal.fire({
             icon: "error",
             title: "Ada Kesalahan...",
-            html: `<p><b>Isian berikut belum diisi/dipilih:</b></p> ${error.message}`,
+            html: `<p><b>Sistem mengalami masalah:</b></p> ${error.message}`,
             confirmButtonColor: "#e3342f",
             confirmButtonText: "Tutup",
           });
