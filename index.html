@@ -13,24 +13,24 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="bg-light">
     <div class="container border border-black bg-white p-5 rounded-3 mb-3">
-      <h1 class="text-center">Download Rekap VK Per Kabupaten/Kota</h1>
+      <h1 class="text-center text-uppercase">Download Rekap VK Per Kabupaten/Kota</h1>
       <div class="mt-5">
         <form id="formSearch">
           <div class="mb-3">
-            <label for="accessToken" class="form-label text-uppercase"
-              >Masukan Token Akses</label
+            <label for="idProvinsi" class="form-label text-uppercase"
+              >Pilih Provinsi</label
             >
-            <input
-              type="text"
-              name="accessToken"
-              id="accessToken"
-              class="form-control"
-            />
+            <select name="idProvinsi" id="idProvinsi" class="form-control">
+              <option value="00">- Pilih Provinsi</option>
+            </select>
           </div>
           <div class="mb-3">
             <label for="idKabkota" class="form-label text-uppercase"
@@ -39,6 +39,18 @@
             <select name="idKabkota" id="idKabkota" class="form-control">
               <option value="0000">- Pilih Kabupaten/Kota</option>
             </select>
+          </div>
+          <div class="mb-3">
+            <label for="accessToken" class="form-label text-uppercase"
+              >Masukan Token Akses</label
+            >
+            <p><i>Token didapat dari hasil login ke aplikasi entri PSLS, Rekap VK, dan BANR sebagai Koseka</i></p>
+            <input
+              type="text"
+              name="accessToken"
+              id="accessToken"
+              class="form-control"
+            />
           </div>
           <div class="mb-3">
             <button class="btn btn-primary" id="btnSearch">

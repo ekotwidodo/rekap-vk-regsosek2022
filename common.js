@@ -1,11 +1,18 @@
 async function fetchApi(url, token) {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-type": "application/json",
-      Authorization: "Bearer " + token,
-    },
-  });
+  let headers = new Headers();
+  let parameters = {};
+
+  headers.append("Content-Type", "application/json");
+  headers.append("Accept", "application/json");
+
+  if (token !== null) {
+    headers.append("Authorization", "Bearer " + token);
+  }
+  parameters["method"] = "GET";
+  parameters["headers"] = headers;
+  parameters["mode"] = "cors";
+
+  const response = await fetch(url, parameters);
 
   return response;
 }
@@ -54,14 +61,33 @@ function toCSV(data) {
   return csv;
 }
 
-function loadKabkota(data) {
+function loadProvinsi(url) {
+  let idProvinsi = document.getElementById("idProvinsi");
+  idProvinsi.innerHTML = "<option value='00'>- Pilih Provinsi -</option>";
+
+  fetchApi(url, null).then((resp) => {
+    console.log(resp);
+    resp.json().forEach((d) => {
+      let option = document.createElement("option");
+      option.value = d.kode;
+      option.textContent = `[${d.kode}] ${d.nama}`;
+      idProvinsi.appendChild(option);
+    });
+  });
+}
+
+function loadKabkota(url, idProv) {
   let idKabkota = document.getElementById("idKabkota");
-  idKabkota.innerHTML = "<option value='0000'>- Pilih Kabupaten/Kota -</option>";
-  data.forEach((d) => {
-    let option = document.createElement("option");
-    option.value = d.id;
-    option.textContent = `[${d.id}] ${d.name}`;
-    idKabkota.appendChild(option);
+  idKabkota.innerHTML =
+    "<option value='0000'>- Pilih Kabupaten/Kota -</option>";
+  fetchApi(`${url}?level=kabupaten&parent=${idProv}`, null).then((resp) => {
+    console.log(resp);
+    resp.json().forEach((d) => {
+      let option = document.createElement("option");
+      option.value = d.kode;
+      option.textContent = `[${d.kode}] ${d.nama}`;
+      idKabkota.appendChild(option);
+    });
   });
 }
 
@@ -294,14 +320,8 @@ function showTableDiv(tables, data) {
   let csvContent = "data:text/csv;charset=utf-8," + toCSV(sortingData(data));
   downloadButton.setAttribute("href", encodeURI(csvContent));
 
-  let today = new Date().toLocaleDateString("id-ID", {
-    weekday: "long",
-    month: "long",
-    year: "numeric",
-    day: "numeric",
-  });
-
-  downloadButton.setAttribute("download", "data.csv");
+  let timestamp = new Date().toISOString().slice(0, 10);
+  downloadButton.setAttribute("download", `${timestamp}_rekapvk.csv`);
   downloadButton.setAttribute("target", "_blank");
 
   new gridjs.Grid({
