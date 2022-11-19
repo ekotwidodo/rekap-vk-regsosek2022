@@ -13,6 +13,7 @@ Teknologi yang digunakan hanya menggunakan HTML, CSS, dan JS.
 - **[15 November 2022]** Initial commit, menampilkan tabel dan download excel
 - **[16 November 2022]** Kustomisasi tampilan, progress bar, serta summary
 - **[17 November 2022]** Kustomisasi tampilan dan fitur, update download menjadi CSV
+- **[18 November 2022]** Tambahan fitur dengan wilayah diperluas, bisa dipakai untuk semua provinsi, dan update tampilan ringkasan
 ## Pengembang
 
 [Eko Teguh Widodo](https://github.com/ekotwidodo/rekap-vk-regsosek2022)

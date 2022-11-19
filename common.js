@@ -1,18 +1,16 @@
 async function fetchApi(url, token) {
-  let headers = new Headers();
-  let parameters = {};
+  const headers = {
+    Accept: "application/json",
+  };
 
-  headers.append("Content-Type", "application/json");
-  headers.append("Accept", "application/json");
-
-  if (token !== null) {
-    headers.append("Authorization", "Bearer " + token);
+  if (token) {
+    headers["Authorization"] = "Bearer " + token;
   }
-  parameters["method"] = "GET";
-  parameters["headers"] = headers;
-  parameters["mode"] = "cors";
 
-  const response = await fetch(url, parameters);
+  const response = await fetch(url, {
+    method: "GET",
+    headers: headers,
+  });
 
   return response;
 }
@@ -49,9 +47,10 @@ function formatNumber(val) {
 }
 
 function toCSV(data) {
+  const sortedData = sortingData(data);
   const replacer = (key, value) => (value === null ? "" : value);
-  const header = Object.keys(data[0]);
-  let csv = data.map((row) =>
+  const header = Object.keys(sortedData[0]);
+  let csv = sortedData.map((row) =>
     header
       .map((fieldName) => JSON.stringify(row[fieldName], replacer))
       .join(";")
@@ -63,31 +62,39 @@ function toCSV(data) {
 
 function loadProvinsi(url) {
   let idProvinsi = document.getElementById("idProvinsi");
+  idProvinsi.innerHTML = "";
   idProvinsi.innerHTML = "<option value='00'>- Pilih Provinsi -</option>";
-
-  fetchApi(url, null).then((resp) => {
-    console.log(resp);
-    resp.json().forEach((d) => {
-      let option = document.createElement("option");
-      option.value = d.kode;
-      option.textContent = `[${d.kode}] ${d.nama}`;
-      idProvinsi.appendChild(option);
+  fetchApi(url + "provinsi.php", null).then((resp) => {
+    resp.json().then((data) => {
+      data.forEach((d) => {
+        let option = document.createElement("option");
+        option.value = d.kode;
+        option.textContent = `[${d.kode}] ${d.nama}`;
+        idProvinsi.appendChild(option);
+      });
     });
   });
 }
 
 function loadKabkota(url, idProv) {
+  const response = fetchApi(`${url}kabupatenkota.php?prov=${idProv}`, null);
+  response.then((resp) => {
+    resp.json().then((data) => {
+      loadKabkotaDiv(data);
+    });
+  });
+}
+
+function loadKabkotaDiv(data) {
   let idKabkota = document.getElementById("idKabkota");
+  idKabkota.innerHTML = "";
   idKabkota.innerHTML =
     "<option value='0000'>- Pilih Kabupaten/Kota -</option>";
-  fetchApi(`${url}?level=kabupaten&parent=${idProv}`, null).then((resp) => {
-    console.log(resp);
-    resp.json().forEach((d) => {
-      let option = document.createElement("option");
-      option.value = d.kode;
-      option.textContent = `[${d.kode}] ${d.nama}`;
-      idKabkota.appendChild(option);
-    });
+  data.forEach((d) => {
+    let option = document.createElement("option");
+    option.value = d.kode;
+    option.textContent = `[${d.kode}] ${d.nama}`;
+    idKabkota.appendChild(option);
   });
 }
 
@@ -125,7 +132,8 @@ function familyCategoryRecap(data) {
 }
 
 function familyRecap(data) {
-  return data.reduce(
+  const count_recap = data.filter((d) => d.jumlah_keluarga_verifikasi === null && d.flag_tidak_ditemukan === 0);
+  const sum_recap = data.reduce(
     (prev, curr) => {
       return {
         jumlah_keluarga_verifikasi:
@@ -138,6 +146,12 @@ function familyRecap(data) {
       nonrespon: 0,
     }
   );
+
+  return {
+    jumlah_keluarga_verifikasi: sum_recap.jumlah_keluarga_verifikasi,
+    nonrespon: sum_recap.nonrespon,
+    belum_entri: count_recap.length,
+  };
 }
 
 function slsRecap(data) {
@@ -198,6 +212,11 @@ function showDashboardDiv(dashDiv, nmKabkota) {
   childRightSummaryDiv.className = "col-6 py-4 rounded-3";
   childRightSummaryDiv.style = "height: 300px";
 
+  let bottomSummaryDiv = document.createElement("div");
+  bottomSummaryDiv.id = "bottomSummaryDiv";
+  bottomSummaryDiv.className = "row mx-3 mt-3 mb-4";
+  bottomSummaryDiv.innerHTML = "* ) Filternya adalah jumlah keluarga verifikasi belum terisi padahal SLS ditemukan";
+
   let subTableDiv = document.createElement("div");
   subTableDiv.id = "tableDiv";
   subTableDiv.className = "row mt-4";
@@ -221,6 +240,7 @@ function showDashboardDiv(dashDiv, nmKabkota) {
   subSummaryDiv.appendChild(childCenterSummaryDiv);
   subSummaryDiv.appendChild(childRightSummaryDiv);
   summaryDiv.appendChild(subSummaryDiv);
+  summaryDiv.appendChild(bottomSummaryDiv);
   summaryDiv.appendChild(subTableDiv);
   dashDiv.appendChild(summaryDiv);
 }
@@ -231,14 +251,16 @@ function showLeftSummaryDiv(families) {
   let hTitle = document.createElement("h4");
   hTitle.textContent = "Keluarga";
   hTitle.className =
-    "text-center text-white text-uppercase font-weight-bold bg-danger mx-3 py-2 rounded-3";
+    "text-center text-white text-uppercase font-weight-bold bg-danger bg-opacity-75 mx-3 py-2 rounded-3";
   idChildLeftSummaryDiv.appendChild(hTitle);
 
   let pContent = document.createElement("p");
   pContent.className = "text-center mt-3";
-  pContent.innerHTML = `Prelist<h3>-</h3>Terverifikasi<h3>${formatNumber(
+  pContent.innerHTML = `Terverifikasi<h3>${formatNumber(
     families.jumlah_keluarga_verifikasi
-  )}</h3>Non-Respon<h3>${formatNumber(families.nonrespon)}</h3>`;
+  )}</h3>Non-Respon<h3>${formatNumber(families.nonrespon)}</h3>Belum Entri *<h3>${
+    families.belum_entri
+  }</h3>`;
   idChildLeftSummaryDiv.appendChild(pContent);
 }
 
@@ -251,14 +273,14 @@ function showCenterSummaryDiv(sls) {
   let hTitle = document.createElement("h4");
   hTitle.textContent = "SLS";
   hTitle.className =
-    "text-center text-white text-uppercase font-weight-bold bg-warning mx-3 py-2 rounded-3";
+    "text-center text-white text-uppercase font-weight-bold bg-info bg-opacity-75 mx-3 py-2 rounded-3";
   idChildCenterSummaryDiv.appendChild(hTitle);
 
   let pContent = document.createElement("p");
   pContent.className = "text-center mt-3";
   pContent.innerHTML = `SLS Total<h3>${formatNumber(
     sls.idsubsls_baru + sls.idsubsls_lama
-  )}</h3>SLS Baru<h3>${formatNumber(
+  )}</h3>SLS Berubah<h3>${formatNumber(
     sls.idsubsls_baru
   )}</h3>SLS Tidak Ditemukan<h3>${formatNumber(sls.sls_tidak_ditemukan)}</h3>`;
   idChildCenterSummaryDiv.appendChild(pContent);
@@ -273,11 +295,6 @@ function showRightSummaryDiv(families) {
       text: "Jumlah Keluarga Berdasarkan Status Kesejahteraan",
       left: "center",
     },
-    // legend: {
-    //   orient: 'horizontal',
-    //   right: 'right',
-    //   top: 'center'
-    // },
     height: "300px",
     tooltip: {
       trigger: "item",
@@ -308,7 +325,7 @@ function showRightSummaryDiv(families) {
   }
 }
 
-function showTableDiv(tables, data) {
+function showTableDiv(tables, data, nmKabkota) {
   let idShowTableDiv = document.getElementById("showTableDiv");
   idShowTableDiv.innerHTML = "";
 
@@ -317,11 +334,15 @@ function showTableDiv(tables, data) {
   downloadButton.id = "downloadCSV";
   downloadButton.innerHTML = `${feather.icons.download.toSvg()}<span>Download CSV</span>`;
 
-  let csvContent = "data:text/csv;charset=utf-8," + toCSV(sortingData(data));
+  let csvContent = "data:text/csv;charset=utf-8," + toCSV(data);
   downloadButton.setAttribute("href", encodeURI(csvContent));
 
   let timestamp = new Date().toISOString().slice(0, 10);
-  downloadButton.setAttribute("download", `${timestamp}_rekapvk.csv`);
+  let kabkota = nmKabkota.substring(1, 5);
+  downloadButton.setAttribute(
+    "download",
+    `${timestamp}_rekapvk_${kabkota}.csv`
+  );
   downloadButton.setAttribute("target", "_blank");
 
   new gridjs.Grid({
@@ -336,6 +357,11 @@ function showTableDiv(tables, data) {
     sort: true,
     resizable: true,
     fixedHeader: true,
+    language: {
+      search: {
+        placeholder: "🔍 Cari...",
+      },
+    },
     columns: tables.columns,
     data: tables.rows,
   }).render(idShowTableDiv);

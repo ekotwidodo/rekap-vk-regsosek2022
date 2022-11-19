@@ -2,90 +2,35 @@ document.onreadystatechange = function () {
   // Define Base API
   const BASE_API = "<your-api-url>";
   const API_REGION = "<your-api-region>";
-  // const regencies = [
-  //   {
-  //     id: "1801",
-  //     name: "KABUPATEN LAMPUNG BARAT",
-  //   },
-  //   {
-  //     id: "1802",
-  //     name: "KABUPATEN TANGGAMUS",
-  //   },
-  //   {
-  //     id: "1803",
-  //     name: "KABUPATEN LAMPUNG SELATAN",
-  //   },
-  //   {
-  //     id: "1804",
-  //     name: "KABUPATEN LAMPUNG TIMUR",
-  //   },
-  //   {
-  //     id: "1805",
-  //     name: "KABUPATEN LAMPUNG TENGAH",
-  //   },
-  //   {
-  //     id: "1806",
-  //     name: "KABUPATEN LAMPUNG UTARA",
-  //   },
-  //   {
-  //     id: "1807",
-  //     name: "KABUPATEN WAY KANAN",
-  //   },
-  //   {
-  //     id: "1808",
-  //     name: "KABUPATEN TULANG BAWANG",
-  //   },
-  //   {
-  //     id: "1809",
-  //     name: "KABUPATEN PESAWARAN",
-  //   },
-  //   {
-  //     id: "1810",
-  //     name: "KABUPATEN PRINGSEWU",
-  //   },
-  //   {
-  //     id: "1811",
-  //     name: "KABUPATEN MESUJI",
-  //   },
-  //   {
-  //     id: "1812",
-  //     name: "KABUPATEN TULANG BAWANG BARAT",
-  //   },
-  //   {
-  //     id: "1813",
-  //     name: "KABUPATEN PESISIR BARAT",
-  //   },
-  //   {
-  //     id: "1871",
-  //     name: "KOTA BANDAR LAMPUNG",
-  //   },
-  //   {
-  //     id: "1872",
-  //     name: "KOTA METRO",
-  //   },
-  // ];
 
   // Define Variables
-  
   let btnSearch = document.getElementById("btnSearch");
   let resultContainer = document.getElementById("resultContainer");
   let progressBar = document.getElementsByClassName("progress-bar")[0];
-  let dropDownProvinsi = document.getElementById("idProvinsi");
-  let dropDownKabkota = document.getElementById("idKabkota");
-  let inputToken = document.getElementById("accessToken");
-  
-  // Set default to disabled
-  dropDownKabkota.setAttribute("disabled", true);
-  inputToken.setAttribute("disabled", true);
+  let dropDownProvinsi = document.querySelector("#idProvinsi");
+  let dropDownKabkota = document.querySelector("#idKabkota");
+  let inputToken = document.querySelector("#accessToken");
+
+  dropDownKabkota.disabled = true;
+  inputToken.disabled = true;
+
+  function stateSelect() {
+    if (dropDownProvinsi.value !== "00") {
+      dropDownKabkota.disabled = false;
+      inputToken.disabled = false;
+    } else {
+      dropDownKabkota.disabled = true;
+      inputToken.disabled = true;
+    }
+  }
 
   // Load Provinsi
   loadProvinsi(API_REGION);
   dropDownProvinsi.addEventListener("change", function (e) {
-
-    dropDownKabkota.setAttribute("disabled", false);
-    inputToken.setAttribute("disabled", false);
+    stateSelect();
+    let idProvinsi = e.target.value;
     // Load Kabupaten/Kota
-    loadKabkota(API_REGION, dropDownProvinsi.value);
+    loadKabkota(API_REGION, idProvinsi);
   });
 
   // Action when button View Rekap VK is clicked
@@ -108,7 +53,7 @@ document.onreadystatechange = function () {
 
     // Check if errors exist
     if (idProvinsi.value === "00") {
-      errors.push("Provinsi belum dipilih.")
+      errors.push("Provinsi belum dipilih.");
     }
     if (idKabkota.value === "0000") {
       errors.push("Kabupaten/Kota belum dipilih.");
@@ -140,7 +85,8 @@ document.onreadystatechange = function () {
 
           Swal.fire({
             icon: "success",
-            title: "Data berhasil dimuat!",
+            title: "Sukses memuat data",
+            html: "<p>Silahkan tunggu sampai berhasil memuat tampilan</p>",
             showConfirmButton: false,
           });
 
@@ -189,7 +135,7 @@ document.onreadystatechange = function () {
             showLeftSummaryDiv(familiesRecaps);
             showCenterSummaryDiv(slsRecaps);
             showRightSummaryDiv(familyCategoryRecaps);
-            showTableDiv(slsTableRecaps, data);
+            showTableDiv(slsTableRecaps, data, nmKabkota);
           }, 3000);
         })
         .catch((error) => {
