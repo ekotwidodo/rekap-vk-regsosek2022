@@ -61,18 +61,23 @@ function toCSV(data) {
 }
 
 function loadProvinsi(url) {
+  const response = fetchApi(url + "provinsi.php", null);
+  response.then((resp) => {
+    resp.json().then((data) => {
+      loadProvinsiDiv(data);
+    });
+  });
+}
+
+function loadProvinsiDiv(data) {
   let idProvinsi = document.getElementById("idProvinsi");
   idProvinsi.innerHTML = "";
   idProvinsi.innerHTML = "<option value='00'>- Pilih Provinsi -</option>";
-  fetchApi(url + "provinsi.php", null).then((resp) => {
-    resp.json().then((data) => {
-      data.forEach((d) => {
-        let option = document.createElement("option");
-        option.value = d.kode;
-        option.textContent = `[${d.kode}] ${d.nama}`;
-        idProvinsi.appendChild(option);
-      });
-    });
+  data.forEach((d) => {
+    let option = document.createElement("option");
+    option.value = d.kode;
+    option.textContent = `[${d.kode}] ${d.nama}`;
+    idProvinsi.appendChild(option);
   });
 }
 
@@ -88,14 +93,79 @@ function loadKabkota(url, idProv) {
 function loadKabkotaDiv(data) {
   let idKabkota = document.getElementById("idKabkota");
   idKabkota.innerHTML = "";
-  idKabkota.innerHTML =
-    "<option value='0000'>- Pilih Kabupaten/Kota -</option>";
+  // idKabkota.innerHTML =
+  //   "<option value='0000'>- Pilih Kabupaten/Kota -</option>";
   data.forEach((d) => {
     let option = document.createElement("option");
     option.value = d.kode;
     option.textContent = `[${d.kode}] ${d.nama}`;
     idKabkota.appendChild(option);
   });
+}
+
+function loadKecamatan(url, idKabkota) {
+  const response = fetchApi(`${url}kecamatan.php?kabkota=${idKabkota}`, null);
+  response.then((resp) => {
+    resp.json().then((data) => {
+      loadKecamatanDiv(data);
+    });
+  });
+}
+
+function loadKecamatanDiv(data) {
+  let idKecamatan = document.getElementById("idKecamatan");
+  idKecamatan.innerHTML = "";
+  idKecamatan.innerHTML =
+    `<option value="000">- SEMUA KECAMATAN -</option>`;
+  data.forEach((d) => {
+    let option = document.createElement("option");
+    option.value = d.kode;
+    option.textContent = `[${d.kode}] ${d.nama}`;
+    idKecamatan.appendChild(option);
+  });
+}
+
+function loadDesaKelurahan(url, idKecamatan) {
+  const response = fetchApi(`${url}desakelurahan.php?kec=${idKecamatan}`, null);
+  response.then((resp) => {
+    resp.json().then((data) => {
+      loadDesaKelurahanDiv(data);
+    });
+  });
+}
+
+function loadDesaKelurahanDiv(data) {
+  let idDesaKelurahan = document.getElementById("idDesaKelurahan");
+  idDesaKelurahan.innerHTML = "";
+  idDesaKelurahan.innerHTML =
+    `<option value="000">- SEMUA DESA/KELURAHAN -</option>`;
+  data.forEach((d) => {
+    let option = document.createElement("option");
+    option.value = d.kode;
+    option.textContent = `[${d.kode}] ${d.nama}`;
+    idDesaKelurahan.appendChild(option);
+  });
+}
+
+function getWilayah(idKabkota, idKecamatan, idDesaKelurahan) {
+  if (idDesaKelurahan.value !== "000") {
+    return {
+      idWilayah: idDesaKelurahan.value,
+      nmWilayah: idDesaKelurahan.options[idDesaKelurahan.selectedIndex].text
+    };
+  }else
+  if (idKecamatan.value !== "000" && idDesaKelurahan.value === "000") {
+    return {
+      idWilayah: idKecamatan.value,
+      nmWilayah: idKecamatan.options[idKecamatan.selectedIndex].text
+    };
+  }else
+  if (idKabkota.value !== "0000" && idKecamatan.value === "000" && idDesaKelurahan.value === "000") {
+    return {
+      idWilayah: idKabkota.value,
+      nmWilayah: idKabkota.options[idKabkota.selectedIndex].text
+    };
+  }
 }
 
 function getToday() {
@@ -132,7 +202,9 @@ function familyCategoryRecap(data) {
 }
 
 function familyRecap(data) {
-  const count_recap = data.filter((d) => d.jumlah_keluarga_verifikasi === null && d.flag_tidak_ditemukan === 0);
+  const count_recap = data.filter(
+    (d) => d.jumlah_keluarga_verifikasi === null && d.flag_tidak_ditemukan === 0
+  );
   const sum_recap = data.reduce(
     (prev, curr) => {
       return {
@@ -180,12 +252,12 @@ function slsTable(data) {
   };
 }
 
-function showDashboardDiv(dashDiv, nmKabkota) {
+function showDashboardDiv(dashDiv, nmWilayah) {
   let summaryDiv = document.createElement("div");
   summaryDiv.id = "summaryDiv";
 
   let hTitle = document.createElement("h3");
-  hTitle.textContent = `Ringkasan Rekap VK ${nmKabkota.substring(7)}`;
+  hTitle.textContent = `Ringkasan Rekap VK ${nmWilayah.split("]")[1].trim()}`;
   hTitle.className = "text-center text-uppercase font-weight-bold";
   summaryDiv.appendChild(hTitle);
 
@@ -215,14 +287,15 @@ function showDashboardDiv(dashDiv, nmKabkota) {
   let bottomSummaryDiv = document.createElement("div");
   bottomSummaryDiv.id = "bottomSummaryDiv";
   bottomSummaryDiv.className = "row mx-3 mt-3 mb-4";
-  bottomSummaryDiv.innerHTML = "* ) Filternya adalah jumlah keluarga verifikasi belum terisi padahal SLS ditemukan";
+  bottomSummaryDiv.innerHTML =
+    "* ) Filternya adalah jumlah keluarga verifikasi belum terisi padahal SLS ditemukan";
 
   let subTableDiv = document.createElement("div");
   subTableDiv.id = "tableDiv";
   subTableDiv.className = "row mt-4";
 
   let tTitle = document.createElement("h3");
-  tTitle.textContent = `Tabel Rekap VK ${nmKabkota.substring(7)}`;
+  tTitle.textContent = `Tabel Rekap VK ${nmWilayah.split("]")[1].trim()}`;
   tTitle.className = "text-center text-uppercase font-weight-bold";
   subTableDiv.appendChild(tTitle);
 
@@ -258,9 +331,9 @@ function showLeftSummaryDiv(families) {
   pContent.className = "text-center mt-3";
   pContent.innerHTML = `Terverifikasi<h3>${formatNumber(
     families.jumlah_keluarga_verifikasi
-  )}</h3>Non-Respon<h3>${formatNumber(families.nonrespon)}</h3>Belum Entri *<h3>${
-    families.belum_entri
-  }</h3>`;
+  )}</h3>Non-Respon<h3>${formatNumber(
+    families.nonrespon
+  )}</h3>Belum Entri VK *<h3>${families.belum_entri}</h3>`;
   idChildLeftSummaryDiv.appendChild(pContent);
 }
 
@@ -325,7 +398,7 @@ function showRightSummaryDiv(families) {
   }
 }
 
-function showTableDiv(tables, data, nmKabkota) {
+function showTableDiv(tables, data, nmWilayah) {
   let idShowTableDiv = document.getElementById("showTableDiv");
   idShowTableDiv.innerHTML = "";
 
@@ -338,10 +411,10 @@ function showTableDiv(tables, data, nmKabkota) {
   downloadButton.setAttribute("href", encodeURI(csvContent));
 
   let timestamp = new Date().toISOString().slice(0, 10);
-  let kabkota = nmKabkota.substring(1, 5);
+  let wilayah = nmWilayah.split("]")[0].substring(1);
   downloadButton.setAttribute(
     "download",
-    `${timestamp}_rekapvk_${kabkota}.csv`
+    `${timestamp}_rekapvk_${wilayah}.csv`
   );
   downloadButton.setAttribute("target", "_blank");
 

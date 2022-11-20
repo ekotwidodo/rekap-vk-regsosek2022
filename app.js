@@ -9,17 +9,25 @@ document.onreadystatechange = function () {
   let progressBar = document.getElementsByClassName("progress-bar")[0];
   let dropDownProvinsi = document.querySelector("#idProvinsi");
   let dropDownKabkota = document.querySelector("#idKabkota");
+  let dropDownKecamatan = document.querySelector("#idKecamatan");
+  let dropDownDesaKelurahan = document.querySelector("#idDesaKelurahan");
   let inputToken = document.querySelector("#accessToken");
 
   dropDownKabkota.disabled = true;
+  dropDownKecamatan.disabled = true;
+  dropDownDesaKelurahan.disabled = true;
   inputToken.disabled = true;
 
   function stateSelect() {
     if (dropDownProvinsi.value !== "00") {
       dropDownKabkota.disabled = false;
+      dropDownKecamatan.disabled = false;
+      dropDownDesaKelurahan.disabled = false;
       inputToken.disabled = false;
     } else {
       dropDownKabkota.disabled = true;
+      dropDownKecamatan.disabled = true;
+      dropDownDesaKelurahan.disabled = true;
       inputToken.disabled = true;
     }
   }
@@ -31,6 +39,23 @@ document.onreadystatechange = function () {
     let idProvinsi = e.target.value;
     // Load Kabupaten/Kota
     loadKabkota(API_REGION, idProvinsi);
+    setTimeout(() => {
+      loadKecamatan(API_REGION, dropDownKabkota.value);
+      dropDownDesaKelurahan.innerHTML = `<option value="000">- SEMUA DESA/KELURAHAN -</option>`;
+    }, 2000);
+  });
+
+  dropDownKabkota.addEventListener("change", function (e) {
+    let idKabkota = e.target.value;
+    // Load Kecamatan
+    loadKecamatan(API_REGION, idKabkota);
+    dropDownDesaKelurahan.innerHTML = `<option value="000">- SEMUA DESA/KELURAHAN -</option>`;
+  });
+
+  dropDownKecamatan.addEventListener("change", function (e) {
+    let idKecamatan = e.target.value;
+    // Load Desa/Kelurahan
+    loadDesaKelurahan(API_REGION, idKecamatan);
   });
 
   // Action when button View Rekap VK is clicked
@@ -49,17 +74,19 @@ document.onreadystatechange = function () {
     let accessToken = document.getElementById("accessToken");
     let idKabkota = document.getElementById("idKabkota");
     let idProvinsi = document.getElementById("idProvinsi");
+    let idKecamatan = document.getElementById("idKecamatan");
+    let idDesaKelurahan = document.getElementById("idDesaKelurahan");
     let errors = [];
 
     // Check if errors exist
     if (idProvinsi.value === "00") {
-      errors.push("Provinsi belum dipilih.");
+      errors.push("Provinsi belum dipilih");
     }
     if (idKabkota.value === "0000") {
-      errors.push("Kabupaten/Kota belum dipilih.");
+      errors.push("Kabupaten/Kota belum dipilih");
     }
     if (accessToken.value === "") {
-      errors.push("Akses Token belum diisi.");
+      errors.push("Akses Token belum diisi");
     }
 
     if (errors.length > 0) {
@@ -91,8 +118,8 @@ document.onreadystatechange = function () {
           });
 
           showRecap(
-            idKabkota.value,
-            idKabkota.options[idKabkota.selectedIndex].text,
+            getWilayah(idKabkota, idKecamatan, idDesaKelurahan).idWilayah,
+            getWilayah(idKabkota, idKecamatan, idDesaKelurahan).nmWilayah,
             accessToken.value,
             showDashboard
           );
@@ -105,9 +132,9 @@ document.onreadystatechange = function () {
     }
   });
 
-  function showRecap(idKabkota, nmKabkota, accessToken, showDashboard) {
+  function showRecap(idWilayah, nmWilayah, accessToken, showDashboard) {
     // Fetch API
-    fetchApi(`${BASE_API}${idKabkota}`, accessToken).then(function (resp) {
+    fetchApi(`${BASE_API}${idWilayah}`, accessToken).then(function (resp) {
       // If data doesn't exist
       if (!resp.ok) {
         Swal.fire({
@@ -123,7 +150,7 @@ document.onreadystatechange = function () {
       resp
         .json()
         .then(({ data }) => {
-          showDashboardDiv(showDashboard, nmKabkota);
+          showDashboardDiv(showDashboard, nmWilayah);
 
           setTimeout(() => {
             // Show the data
@@ -135,7 +162,7 @@ document.onreadystatechange = function () {
             showLeftSummaryDiv(familiesRecaps);
             showCenterSummaryDiv(slsRecaps);
             showRightSummaryDiv(familyCategoryRecaps);
-            showTableDiv(slsTableRecaps, data, nmKabkota);
+            showTableDiv(slsTableRecaps, data, nmWilayah);
           }, 3000);
         })
         .catch((error) => {
