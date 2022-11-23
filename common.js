@@ -115,8 +115,7 @@ function loadKecamatan(url, idKabkota) {
 function loadKecamatanDiv(data) {
   let idKecamatan = document.getElementById("idKecamatan");
   idKecamatan.innerHTML = "";
-  idKecamatan.innerHTML =
-    `<option value="000">- SEMUA KECAMATAN -</option>`;
+  idKecamatan.innerHTML = `<option value="000">- SEMUA KECAMATAN -</option>`;
   data.forEach((d) => {
     let option = document.createElement("option");
     option.value = d.kode;
@@ -137,8 +136,7 @@ function loadDesaKelurahan(url, idKecamatan) {
 function loadDesaKelurahanDiv(data) {
   let idDesaKelurahan = document.getElementById("idDesaKelurahan");
   idDesaKelurahan.innerHTML = "";
-  idDesaKelurahan.innerHTML =
-    `<option value="000">- SEMUA DESA/KELURAHAN -</option>`;
+  idDesaKelurahan.innerHTML = `<option value="000">- SEMUA DESA/KELURAHAN -</option>`;
   data.forEach((d) => {
     let option = document.createElement("option");
     option.value = d.kode;
@@ -151,19 +149,21 @@ function getWilayah(idKabkota, idKecamatan, idDesaKelurahan) {
   if (idDesaKelurahan.value !== "000") {
     return {
       idWilayah: idDesaKelurahan.value,
-      nmWilayah: idDesaKelurahan.options[idDesaKelurahan.selectedIndex].text
+      nmWilayah: idDesaKelurahan.options[idDesaKelurahan.selectedIndex].text,
     };
-  }else
-  if (idKecamatan.value !== "000" && idDesaKelurahan.value === "000") {
+  } else if (idKecamatan.value !== "000" && idDesaKelurahan.value === "000") {
     return {
       idWilayah: idKecamatan.value,
-      nmWilayah: idKecamatan.options[idKecamatan.selectedIndex].text
+      nmWilayah: idKecamatan.options[idKecamatan.selectedIndex].text,
     };
-  }else
-  if (idKabkota.value !== "0000" && idKecamatan.value === "000" && idDesaKelurahan.value === "000") {
+  } else if (
+    idKabkota.value !== "0000" &&
+    idKecamatan.value === "000" &&
+    idDesaKelurahan.value === "000"
+  ) {
     return {
       idWilayah: idKabkota.value,
-      nmWilayah: idKabkota.options[idKabkota.selectedIndex].text
+      nmWilayah: idKabkota.options[idKabkota.selectedIndex].text,
     };
   }
 }
@@ -201,9 +201,22 @@ function familyCategoryRecap(data) {
   );
 }
 
+function slsCategoryRecap(data) {
+  // Jumlah SLS yang mengalami perubahan status kode 1, 2, dan 3
+  return {
+    mekar: data.filter((d) => d.status !== null && d.status === "1").length,
+    gabung: data.filter((d) => d.status !== null && d.status === "2").length,
+    ganti_nama: data.filter((d) => d.status !== null && d.status === "3")
+      .length,
+  };
+}
+
 function familyRecap(data) {
-  const count_recap = data.filter(
+  const count_belum_entri = data.filter(
     (d) => d.jumlah_keluarga_verifikasi === null && d.flag_tidak_ditemukan === 0
+  );
+  const count_sudah_entri = data.filter(
+    (d) => d.jumlah_keluarga_verifikasi !== null
   );
   const sum_recap = data.reduce(
     (prev, curr) => {
@@ -222,7 +235,8 @@ function familyRecap(data) {
   return {
     jumlah_keluarga_verifikasi: sum_recap.jumlah_keluarga_verifikasi,
     nonrespon: sum_recap.nonrespon,
-    belum_entri: count_recap.length,
+    belum_entri: count_belum_entri.length,
+    sudah_entri: count_sudah_entri.length,
   };
 }
 
@@ -232,11 +246,18 @@ function slsRecap(data) {
   const idsubsls_lama = data.filter((d) => d.idsubsls_baru === null);
   const sls_ditemukan = data.filter((d) => d.flag_tidak_ditemukan === 0);
   const sls_tidak_ditemukan = data.filter((d) => d.flag_tidak_ditemukan === 1);
+  const sls_setelah_berubah =
+    [
+      ...new Set(
+        data.filter((d) => d.idsubsls_baru !== null).map((d) => d.nmsls_baru)
+      ),
+    ].length + idsubsls_lama.length;
   return {
     idsubsls_baru: idsubsls_baru.length,
     idsubsls_lama: idsubsls_lama.length,
     sls_ditemukan: sls_ditemukan.length,
     sls_tidak_ditemukan: sls_tidak_ditemukan.length,
+    sls_setelah_berubah: sls_setelah_berubah,
   };
 }
 
@@ -266,29 +287,40 @@ function showDashboardDiv(dashDiv, nmWilayah) {
   hSubtitle.className = "text-center mb-4";
   summaryDiv.appendChild(hSubtitle);
 
-  let subSummaryDiv = document.createElement("div");
-  subSummaryDiv.className = "row g-2 bg-light p-4 rounded-3";
+  let firstSummaryDiv = document.createElement("div");
+  firstSummaryDiv.className = "row g-2 bg-light p-4 rounded-3";
+  let secondSummaryDiv = document.createElement("div");
+  secondSummaryDiv.className = "row g-2 bg-light p-4 rounded-3";
 
-  let childLeftSummaryDiv = document.createElement("div");
-  childLeftSummaryDiv.id = "childLeftSummaryDiv";
-  childLeftSummaryDiv.className = "col-3 py-4 rounded-3 text-center";
-  childLeftSummaryDiv.style = "height: 300px";
+  let firstLeftSummaryDiv = document.createElement("div");
+  firstLeftSummaryDiv.id = "firstLeftSummaryDiv";
+  firstLeftSummaryDiv.className = "col-4 py-4 rounded-3 text-center";
+  firstLeftSummaryDiv.style = "height: 350px";
+  // Inside firstLeftSummaryDiv
+  let firstRightSummaryDiv = document.createElement("div");
+  firstRightSummaryDiv.id = "firstRightSummaryDiv";
+  firstRightSummaryDiv.className = "col-8 py-4 rounded-3";
+  firstRightSummaryDiv.style = "height: 350px";
+  firstSummaryDiv.appendChild(firstLeftSummaryDiv);
+  firstSummaryDiv.appendChild(firstRightSummaryDiv);
 
-  let childCenterSummaryDiv = document.createElement("div");
-  childCenterSummaryDiv.id = "childCenterSummaryDiv";
-  childCenterSummaryDiv.className = "col-3 py-4 rounded-3 text-center";
-  childCenterSummaryDiv.style = "height: 300px";
-
-  let childRightSummaryDiv = document.createElement("div");
-  childRightSummaryDiv.id = "childRightSummaryDiv";
-  childRightSummaryDiv.className = "col-6 py-4 rounded-3";
-  childRightSummaryDiv.style = "height: 300px";
+  let secondLeftSummaryDiv = document.createElement("div");
+  secondLeftSummaryDiv.id = "secondLeftSummaryDiv";
+  secondLeftSummaryDiv.className = "col-4 py-4 rounded-3 text-center";
+  secondLeftSummaryDiv.style = "height: 350px";
+  // Inside firstLeftSummaryDiv
+  let secondRightSummaryDiv = document.createElement("div");
+  secondRightSummaryDiv.id = "secondRightSummaryDiv";
+  secondRightSummaryDiv.className = "col-8 py-4 rounded-3";
+  secondRightSummaryDiv.style = "height: 350px";
+  secondSummaryDiv.appendChild(secondLeftSummaryDiv);
+  secondSummaryDiv.appendChild(secondRightSummaryDiv);
 
   let bottomSummaryDiv = document.createElement("div");
   bottomSummaryDiv.id = "bottomSummaryDiv";
   bottomSummaryDiv.className = "row mx-3 mt-3 mb-4";
   bottomSummaryDiv.innerHTML =
-    "* ) Filternya adalah jumlah keluarga verifikasi belum terisi padahal SLS ditemukan";
+    "<p><strong>Keterangan:</strong><ol><li>Belum Entri VK = jumlah keluarga verifikasi belum terisi padahal SLS ditemukan</li><li>SLS Total (Setelah Berubah) = sls baru dan unik (tidak sama)</li></ol></p>";
 
   let subTableDiv = document.createElement("div");
   subTableDiv.id = "tableDiv";
@@ -309,61 +341,41 @@ function showDashboardDiv(dashDiv, nmWilayah) {
   showTableDiv.className = "bg-light p-4 rounded-3";
   subTableDiv.appendChild(showTableDiv);
 
-  subSummaryDiv.appendChild(childLeftSummaryDiv);
-  subSummaryDiv.appendChild(childCenterSummaryDiv);
-  subSummaryDiv.appendChild(childRightSummaryDiv);
-  summaryDiv.appendChild(subSummaryDiv);
+  summaryDiv.appendChild(firstSummaryDiv);
+  summaryDiv.appendChild(secondSummaryDiv);
   summaryDiv.appendChild(bottomSummaryDiv);
   summaryDiv.appendChild(subTableDiv);
   dashDiv.appendChild(summaryDiv);
 }
 
-function showLeftSummaryDiv(families) {
-  let idChildLeftSummaryDiv = document.getElementById("childLeftSummaryDiv");
-  idChildLeftSummaryDiv.innerHTML = "";
+function showFistSummaryDiv(familyRecaps, familyCharts) {
+  let firstLeftSummaryDiv = document.getElementById("firstLeftSummaryDiv");
+  firstLeftSummaryDiv.innerHTML = "";
+
   let hTitle = document.createElement("h4");
   hTitle.textContent = "Keluarga";
   hTitle.className =
     "text-center text-white text-uppercase font-weight-bold bg-danger bg-opacity-75 mx-3 py-2 rounded-3";
-  idChildLeftSummaryDiv.appendChild(hTitle);
+  firstLeftSummaryDiv.appendChild(hTitle);
 
   let pContent = document.createElement("p");
   pContent.className = "text-center mt-3";
   pContent.innerHTML = `Terverifikasi<h3>${formatNumber(
-    families.jumlah_keluarga_verifikasi
+    familyRecaps.jumlah_keluarga_verifikasi
   )}</h3>Non-Respon<h3>${formatNumber(
-    families.nonrespon
-  )}</h3>Belum Entri VK *<h3>${families.belum_entri}</h3>`;
-  idChildLeftSummaryDiv.appendChild(pContent);
-}
+    familyRecaps.nonrespon
+  )}</h3>Sudah Entri VK<h3>${formatNumber(
+    familyRecaps.sudah_entri
+  )}</h3></h3>Belum Entri VK *<h3>${formatNumber(
+    familyRecaps.belum_entri
+  )}</h3>`;
+  firstLeftSummaryDiv.appendChild(pContent);
 
-function showCenterSummaryDiv(sls) {
-  let idChildCenterSummaryDiv = document.getElementById(
-    "childCenterSummaryDiv"
-  );
-  idChildCenterSummaryDiv.innerHTML = "";
+  // Show chart
+  let firstRightSummaryDiv = document.getElementById("firstRightSummaryDiv");
+  let chartRightSummary = echarts.init(firstRightSummaryDiv);
 
-  let hTitle = document.createElement("h4");
-  hTitle.textContent = "SLS";
-  hTitle.className =
-    "text-center text-white text-uppercase font-weight-bold bg-info bg-opacity-75 mx-3 py-2 rounded-3";
-  idChildCenterSummaryDiv.appendChild(hTitle);
-
-  let pContent = document.createElement("p");
-  pContent.className = "text-center mt-3";
-  pContent.innerHTML = `SLS Total<h3>${formatNumber(
-    sls.idsubsls_baru + sls.idsubsls_lama
-  )}</h3>SLS Berubah<h3>${formatNumber(
-    sls.idsubsls_baru
-  )}</h3>SLS Tidak Ditemukan<h3>${formatNumber(sls.sls_tidak_ditemukan)}</h3>`;
-  idChildCenterSummaryDiv.appendChild(pContent);
-}
-
-function showRightSummaryDiv(families) {
-  let idChildRightSummaryDiv = document.getElementById("childRightSummaryDiv");
-  let chartRightSummary = echarts.init(idChildRightSummaryDiv);
-
-  let childRightOption = {
+  let chartRightSummaryOption = {
     title: {
       text: "Jumlah Keluarga Berdasarkan Status Kesejahteraan",
       left: "center",
@@ -385,16 +397,94 @@ function showRightSummaryDiv(families) {
         type: "pie",
         radius: "50%",
         data: [
-          { value: families.sangat_miskin, name: "Sangat Miskin" },
-          { value: families.miskin, name: "Miskin" },
-          { value: families.tidak_miskin, name: "Tidak Miskin" },
+          { value: familyCharts.sangat_miskin, name: "Sangat Miskin" },
+          { value: familyCharts.miskin, name: "Miskin" },
+          { value: familyCharts.tidak_miskin, name: "Tidak Miskin" },
         ],
+      },
+    ],
+    color: ["#EE6666", "#FAC858", "#73C0DE"],
+  };
+
+  if (chartRightSummaryOption && typeof chartRightSummaryOption === "object") {
+    chartRightSummary.setOption(chartRightSummaryOption);
+  }
+}
+
+function showSecondSummaryDiv(slsRecaps, slsCharts) {
+  let secondLeftSummaryDiv = document.getElementById("secondLeftSummaryDiv");
+  secondLeftSummaryDiv.innerHTML = "";
+
+  let hTitle = document.createElement("h4");
+  hTitle.textContent = "SLS";
+  hTitle.className =
+    "text-center text-white text-uppercase font-weight-bold bg-success bg-opacity-75 mx-3 py-2 rounded-3";
+    secondLeftSummaryDiv.appendChild(hTitle);
+
+  let pContent = document.createElement("p");
+  pContent.className = "text-center mt-3";
+  pContent.innerHTML = `SLS Total (Sebelum Berubah)<h3>${formatNumber(
+    slsRecaps.idsubsls_baru + slsRecaps.idsubsls_lama
+  )}</h3>SLS Berubah<h3>${formatNumber(
+    slsRecaps.idsubsls_baru
+  )}</h3>SLS Tidak Ditemukan<h3>${formatNumber(
+    slsRecaps.sls_tidak_ditemukan
+  )}</h3>
+  </h3>SLS Total (Setelah Berubah) **<h3>${formatNumber(
+    slsRecaps.sls_setelah_berubah
+  )}</h3>`;
+  secondLeftSummaryDiv.appendChild(pContent);
+
+  // Show chart
+  let secondRightSummaryDiv = document.getElementById("secondRightSummaryDiv");
+  let chartRightSummary = echarts.init(secondRightSummaryDiv);
+
+  let chartRightSummaryOption = {
+    title: {
+      text: "Jumlah SLS Berdasarkan Status Perubahan",
+      left: "center",
+    },
+    height: "300px",
+    tooltip: {
+      trigger: "item",
+    },
+    legend: {
+      bottom: "3%",
+      left: "center",
+    },
+
+    series: [
+      {
+        name: "Status Perubahan",
+        type: "pie",
+        radius: ["40%", "70%"],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: "center",
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: "40",
+            fontWeight: "bold",
+          },
+        },
+        labelLine: {
+          show: false,
+        },
+        data: [
+          { value: slsCharts.mekar, name: "Pemekaran" },
+          { value: slsCharts.gabung, name: "Penggabungan" },
+          { value: slsCharts.ganti_nama, name: "Perubahan Nama" },
+        ],
+        color: ["#E062AE", "#91CC75", "#FAC858"],
       },
     ],
   };
 
-  if (childRightOption && typeof childRightOption === "object") {
-    chartRightSummary.setOption(childRightOption);
+  if (chartRightSummaryOption && typeof chartRightSummaryOption === "object") {
+    chartRightSummary.setOption(chartRightSummaryOption);
   }
 }
 
@@ -403,7 +493,7 @@ function showTableDiv(tables, data, nmWilayah) {
   idShowTableDiv.innerHTML = "";
 
   let downloadButton = document.createElement("a");
-  downloadButton.className = "btn btn-success w-10 mt-4";
+  downloadButton.className = "btn btn-primary w-10 mt-4";
   downloadButton.id = "downloadCSV";
   downloadButton.innerHTML = `${feather.icons.download.toSvg()}<span>Download CSV</span>`;
 

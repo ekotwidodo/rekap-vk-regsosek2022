@@ -15,6 +15,7 @@ Teknologi yang digunakan hanya menggunakan HTML, CSS, dan JS.
 - **[17 November 2022]** Kustomisasi tampilan dan fitur, update download menjadi CSV
 - **[19 November 2022]** Tambahan fitur dengan wilayah diperluas, bisa dipakai untuk semua provinsi, dan update tampilan ringkasan
 - **[20 November 2022]** Tambahan fitur dengan wilayah sampe desa/kelurahan, dan update tampilan
+- **[23 November 2022]** Tambahan Informasi di Ringkasan serta update tampilan
 ## Pengembang
 
 [Eko Teguh Widodo](https://github.com/ekotwidodo/rekap-vk-regsosek2022)

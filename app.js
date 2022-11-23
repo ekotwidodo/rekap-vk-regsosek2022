@@ -155,13 +155,13 @@ document.onreadystatechange = function () {
           setTimeout(() => {
             // Show the data
             let familyCategoryRecaps = familyCategoryRecap(data);
+            let slsCategoryRecaps = slsCategoryRecap(data);
             let familiesRecaps = familyRecap(data);
             let slsRecaps = slsRecap(data);
             let slsTableRecaps = slsTable(data);
 
-            showLeftSummaryDiv(familiesRecaps);
-            showCenterSummaryDiv(slsRecaps);
-            showRightSummaryDiv(familyCategoryRecaps);
+            showFistSummaryDiv(familiesRecaps, familyCategoryRecaps);
+            showSecondSummaryDiv(slsRecaps, slsCategoryRecaps);
             showTableDiv(slsTableRecaps, data, nmWilayah);
           }, 3000);
         })
